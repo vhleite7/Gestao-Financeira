@@ -220,6 +220,10 @@
                     class="qf-chip px-2.5 py-1 rounded-lg text-[11px] font-medium bg-[#121215] text-[#A1A1AA] border border-[#27272A] hover:border-[#3F3F46] whitespace-nowrap transition">
                     Sem juros
                 </button>
+                <button type="button" onclick="setQuickFilter('parcelados')" data-qf="parcelados"
+                    class="qf-chip px-2.5 py-1 rounded-lg text-[11px] font-medium bg-[#121215] text-[#A1A1AA] border border-[#27272A] hover:border-[#3F3F46] whitespace-nowrap transition">
+                    Parcelados
+                </button>
             </div>
         </section>
 
@@ -281,8 +285,52 @@
                         class="w-full bg-[#18181B] border border-[#27272A] focus:border-[#FAFAFA] rounded-xl px-3.5 py-2.5 font-mono text-base font-semibold text-[#FAFAFA] placeholder-[#71717A] focus:outline-none">
                 </div>
 
+                <!-- Modalidade do empréstimo -->
+                <div class="flex items-center justify-between bg-[#18181B] border border-[#27272A] rounded-xl p-3.5">
+                    <span class="text-xs font-medium text-[#FAFAFA]">Modalidade</span>
+                    <div class="inline-flex bg-[#121215] p-0.5 rounded-lg border border-[#27272A]">
+                        <button type="button" id="loan-type-juros" onclick="setLoanType('juros')"
+                            class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-[#27272A] text-[#FAFAFA] transition">
+                            Só Juros
+                        </button>
+                        <button type="button" id="loan-type-parcelado" onclick="setLoanType('parcelado')"
+                            class="px-2.5 py-1 rounded-md text-[11px] font-medium text-[#71717A] transition">
+                            Parcelado
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Parcelas (modalidade Parcelado) -->
+                <div id="installment-block" class="hidden bg-[#18181B] border border-[#27272A] rounded-xl p-3.5 space-y-3">
+                    <span class="text-xs font-medium text-[#FAFAFA] block">Parcelas</span>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label for="form-installments" class="block text-[11px] font-medium text-[#A1A1AA] mb-1.5">Nº de parcelas</label>
+                            <input type="number" id="form-installments" min="1" max="120" step="1" value="2"
+                                oninput="updateInstallmentPreview()"
+                                class="w-full bg-[#121215] border border-[#27272A] focus:border-[#FAFAFA] rounded-xl px-3 py-2.5 font-mono text-sm text-[#FAFAFA] focus:outline-none">
+                        </div>
+                        <div>
+                            <label for="form-installment-value" class="block text-[11px] font-medium text-[#A1A1AA] mb-1.5">Valor de cada parcela</label>
+                            <input type="text" id="form-installment-value" inputmode="numeric" placeholder="R$ 0,00"
+                                oninput="maskCurrency(this); updateInstallmentPreview();"
+                                class="w-full bg-[#121215] border border-[#27272A] focus:border-[#FAFAFA] rounded-xl px-3 py-2.5 font-mono text-sm text-[#FAFAFA] placeholder-[#71717A] focus:outline-none">
+                        </div>
+                    </div>
+                    <div class="pt-2 border-t border-[#27272A] space-y-1 text-xs">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[#71717A]">Total a receber:</span>
+                            <span id="form-installment-total" class="font-mono font-semibold text-[#FAFAFA] tabular-nums">R$ 0,00</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-[#71717A]">Ganho (total − emprestado):</span>
+                            <span id="form-installment-gain" class="font-mono font-semibold text-emerald-400 tabular-nums">R$ 0,00</span>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Rendimento / Juros Mensal -->
-                <div class="bg-[#18181B] border border-[#27272A] rounded-xl p-3.5 space-y-3">
+                <div id="interest-block" class="bg-[#18181B] border border-[#27272A] rounded-xl p-3.5 space-y-3">
                     <div class="flex items-center justify-between">
                         <span class="text-xs font-medium text-[#FAFAFA]">Rendimento Mensal (Juros)</span>
                         <div class="inline-flex bg-[#121215] p-0.5 rounded-lg border border-[#27272A]">
@@ -440,7 +488,7 @@
                             <span id="det-balance" class="font-mono text-2xl font-semibold text-[#FAFAFA] tabular-nums">R$ 0,00</span>
                         </div>
                         <div class="text-right">
-                            <span class="text-[11px] text-[#71717A] block">Juros / Mês</span>
+                            <span id="det-interest-label" class="text-[11px] text-[#71717A] block">Juros / Mês</span>
                             <span id="det-monthly-interest" class="font-mono text-sm font-semibold text-emerald-400 tabular-nums">R$ 0,00</span>
                         </div>
                     </div>
@@ -451,7 +499,7 @@
                             <span id="det-original" class="font-mono text-[#A1A1AA] tabular-nums">R$ 0,00</span>
                         </div>
                         <div>
-                            <span class="text-[10px] text-[#71717A] block">Taxa Mensal</span>
+                            <span id="det-rate-label" class="text-[10px] text-[#71717A] block">Taxa Mensal</span>
                             <span id="det-rate" class="font-mono text-[#A1A1AA]">0% a.m.</span>
                         </div>
                         <div class="text-right">
@@ -497,7 +545,7 @@
                     </div>
 
                     <!-- Seletor dos 3 Modos -->
-                    <div class="grid grid-cols-3 gap-1 bg-[#121215] p-1 rounded-xl border border-[#27272A]">
+                    <div id="pay-mode-selector" class="grid grid-cols-3 gap-1 bg-[#121215] p-1 rounded-xl border border-[#27272A]">
                         <button type="button" id="mode-btn-juros" onclick="setPaymentMode('juros')"
                             class="pay-mode-btn py-2 px-1.5 rounded-lg text-[11px] font-medium text-[#FAFAFA] bg-[#27272A] transition text-center leading-tight">
                             Só Juros
@@ -716,6 +764,8 @@
         let currentPaymentMode = 'juros'; // 'juros' | 'amortizacao' | 'quitacao'
         let tempFormReceiptBase64 = null;
         let hasInterestFlag = true;
+        let currentLoanType = 'juros';   // 'juros' | 'parcelado'
+        let loanTypeLocked = false;
 
         let deleteConfirmTimer = null;
         let deleteConfirmArmed = false;
@@ -809,6 +859,12 @@
             if (!iso) return '';
             const [y, m, d] = iso.split('-');
             return `${d}/${m}/${y}`;
+        }
+
+        // Saldo do principal após k parcelas pagas (abate o principal em partes iguais)
+        function getInstallmentBalance(principal, n, k) {
+            if (k >= n) return 0;
+            return Number(((principal * (n - k)) / n).toFixed(2));
         }
 
         function getMonthlyInterest(contract) {
@@ -989,7 +1045,9 @@
                 } else if (filterQuick === 'com_juros') {
                     list = list.filter(c => Number(c.taxaJuros) > 0);
                 } else if (filterQuick === 'sem_juros') {
-                    list = list.filter(c => !c.taxaJuros || Number(c.taxaJuros) <= 0);
+                    list = list.filter(c => c.modalidade !== 'parcelado' && (!c.taxaJuros || Number(c.taxaJuros) <= 0));
+                } else if (filterQuick === 'parcelados') {
+                    list = list.filter(c => c.modalidade === 'parcelado');
                 }
             }
 
@@ -1030,7 +1088,10 @@
                 const statusInfo = getDueStatusInfo(c);
                 const hasInterest = Number(c.taxaJuros) > 0;
 
-                const interestLine = hasInterest
+                const isParc = c.modalidade === 'parcelado';
+                const interestLine = isParc
+                    ? `<span class="font-mono text-sky-400 font-medium">${c.parcelasPagas || 0}/${c.numParcelas} parcelas · ${formatBRL(c.valorParcela)}</span>`
+                    : hasInterest
                     ? `<span class="font-mono text-emerald-400 font-medium">${String(c.taxaJuros).replace('.', ',')}% · ${formatBRL(monthlyInt)}/mês</span>`
                     : `<span class="text-[#71717A]">Sem juros</span>`;
 
@@ -1094,6 +1155,7 @@
         function openFormModal(contractToEdit = null) {
             const form = document.getElementById('contract-form');
             form.reset();
+            loanTypeLocked = false;
             tempFormReceiptBase64 = null;
             updateReceiptFormUI();
 
@@ -1101,7 +1163,7 @@
                 document.getElementById('form-modal-title').textContent = 'Editar Empréstimo';
                 document.getElementById('form-id').value = contractToEdit.id;
                 document.getElementById('form-person').value = contractToEdit.pessoa;
-                document.getElementById('form-amount').value = formatBRL(contractToEdit.saldoPrincipal);
+                document.getElementById('form-amount').value = formatBRL(contractToEdit.modalidade === 'parcelado' ? contractToEdit.valorOriginal : contractToEdit.saldoPrincipal);
                 document.getElementById('form-due-day').value = contractToEdit.diaRecorrente;
                 document.getElementById('form-start-date').value = contractToEdit.dataInicio || getTodayISO();
                 document.getElementById('form-destination').value = contractToEdit.destinacao || '';
@@ -1113,11 +1175,21 @@
                     document.getElementById('form-rate').value = contractToEdit.taxaJuros;
                 }
 
+                if (contractToEdit.modalidade === 'parcelado') {
+                    document.getElementById('form-installments').value = contractToEdit.numParcelas;
+                    document.getElementById('form-installment-value').value = formatBRL(contractToEdit.valorParcela);
+                    setLoanType('parcelado');
+                } else {
+                    setLoanType('juros');
+                }
+                loanTypeLocked = (contractToEdit.historico || []).length > 0;
+
                 if (contractToEdit.comprovante) {
                     tempFormReceiptBase64 = contractToEdit.comprovante;
                     updateReceiptFormUI();
                 }
             } else {
+                setLoanType('juros');
                 document.getElementById('form-modal-title').textContent = 'Novo Empréstimo';
                 document.getElementById('form-id').value = '';
                 document.getElementById('form-due-day').value = new Date().getDate();
@@ -1129,6 +1201,33 @@
             syncDestinationChips();
             updateFormInterestPreview();
             openModal('form-modal');
+        }
+
+        function setLoanType(type) {
+            if (loanTypeLocked && type !== currentLoanType) {
+                showToast('A modalidade não pode mudar depois de haver lançamentos.');
+                return;
+            }
+            currentLoanType = type;
+            const on = 'px-2.5 py-1 rounded-md text-[11px] font-medium bg-[#27272A] text-[#FAFAFA] transition';
+            const off = 'px-2.5 py-1 rounded-md text-[11px] font-medium text-[#71717A] transition';
+            document.getElementById('loan-type-juros').className = type === 'juros' ? on : off;
+            document.getElementById('loan-type-parcelado').className = type === 'parcelado' ? on : off;
+            document.getElementById('interest-block').classList.toggle('hidden', type === 'parcelado');
+            document.getElementById('installment-block').classList.toggle('hidden', type !== 'parcelado');
+            updateFormInterestPreview();
+        }
+
+        function updateInstallmentPreview() {
+            const amount = parseCurrency(document.getElementById('form-amount').value);
+            const n = parseInt(document.getElementById('form-installments').value, 10) || 0;
+            const v = parseCurrency(document.getElementById('form-installment-value').value);
+            const total = n * v;
+            const gain = total - amount;
+            document.getElementById('form-installment-total').textContent = formatBRL(total);
+            const gainEl = document.getElementById('form-installment-gain');
+            gainEl.textContent = formatBRL(gain);
+            gainEl.className = 'font-mono font-semibold tabular-nums ' + (gain < 0 ? 'text-red-400' : 'text-emerald-400');
         }
 
         function setInterestMode(enabled) {
@@ -1159,6 +1258,7 @@
             const rate = hasInterestFlag ? (parseFloat(document.getElementById('form-rate').value) || 0) : 0;
             const monthly = (amount * rate) / 100;
             document.getElementById('form-interest-preview').textContent = `${formatBRL(monthly)} / mês`;
+            updateInstallmentPreview();
         }
 
         function selectDestinationChip(label) {
@@ -1248,7 +1348,10 @@
             const id = document.getElementById('form-id').value;
             const pessoa = document.getElementById('form-person').value.trim();
             const amount = parseCurrency(document.getElementById('form-amount').value);
-            const taxaJuros = hasInterestFlag ? (parseFloat(document.getElementById('form-rate').value) || 0) : 0;
+            const isParcelado = currentLoanType === 'parcelado';
+            const numParcelas = parseInt(document.getElementById('form-installments').value, 10) || 0;
+            const valorParcela = parseCurrency(document.getElementById('form-installment-value').value);
+            const taxaJuros = (!isParcelado && hasInterestFlag) ? (parseFloat(document.getElementById('form-rate').value) || 0) : 0;
             const diaRecorrente = parseInt(document.getElementById('form-due-day').value, 10) || 1;
             const dataInicio = document.getElementById('form-start-date').value || getTodayISO();
             const destinacao = document.getElementById('form-destination').value.trim() || 'Pessoal';
@@ -1259,13 +1362,30 @@
                 return;
             }
 
+            if (isParcelado && (numParcelas < 1 || valorParcela <= 0)) {
+                showToast('Informe o nº de parcelas e o valor de cada parcela.');
+                return;
+            }
+
+            const extra = isParcelado
+                ? { modalidade: 'parcelado', numParcelas, valorParcela }
+                : { modalidade: 'juros' };
+
             if (id) {
                 const idx = contracts.findIndex(c => c.id === id);
                 if (idx !== -1) {
+                    const prev = contracts[idx];
+                    const paidCount = prev.parcelasPagas || 0;
+                    if (isParcelado && numParcelas < paidCount) {
+                        showToast(`Já existem ${paidCount} parcelas pagas. Use um número maior ou igual.`);
+                        return;
+                    }
                     contracts[idx] = {
                         ...contracts[idx],
+                        ...extra,
                         pessoa,
-                        saldoPrincipal: amount,
+                        valorOriginal: isParcelado ? amount : prev.valorOriginal,
+                        saldoPrincipal: isParcelado ? getInstallmentBalance(amount, numParcelas, paidCount) : amount,
                         taxaJuros,
                         diaRecorrente,
                         dataInicio,
@@ -1289,7 +1409,9 @@
                     comprovante: tempFormReceiptBase64,
                     status: 'ativo',
                     ultimoMesPago: null,
-                    historico: []
+                    historico: [],
+                    ...extra,
+                    ...(isParcelado ? { parcelasPagas: 0 } : {})
                 };
                 contracts.unshift(newContract);
                 showToast('Empréstimo registrado');
@@ -1324,6 +1446,14 @@
             document.getElementById('det-monthly-interest').textContent = Number(c.taxaJuros) > 0 ? formatBRL(monthlyInt) : 'Sem juros';
             document.getElementById('det-original').textContent = formatBRL(c.valorOriginal);
             document.getElementById('det-rate').textContent = Number(c.taxaJuros) > 0 ? `${String(c.taxaJuros).replace('.', ',')}% a.m.` : '0% a.m.';
+
+            const isParc = c.modalidade === 'parcelado';
+            document.getElementById('det-interest-label').textContent = isParc ? 'Valor da Parcela' : 'Juros / Mês';
+            document.getElementById('det-rate-label').textContent = isParc ? 'Parcelas' : 'Taxa Mensal';
+            if (isParc) {
+                document.getElementById('det-monthly-interest').textContent = formatBRL(c.valorParcela);
+                document.getElementById('det-rate').textContent = `${c.parcelasPagas || 0} de ${c.numParcelas} pagas`;
+            }
             document.getElementById('det-due-day').textContent = `Todo dia ${String(c.diaRecorrente).padStart(2, '0')}`;
 
             const notesBox = document.getElementById('det-notes-box');
@@ -1364,6 +1494,15 @@
                     btnJuros.classList.add('opacity-40', 'cursor-not-allowed');
                     setPaymentMode('amortizacao');
                 }
+
+                // Contrato parcelado: esconde os 3 modos e mostra o recebimento de parcela
+                const modeSel = document.getElementById('pay-mode-selector');
+                if (isParc) {
+                    modeSel.classList.add('hidden');
+                    setupParcelPayment(c);
+                } else {
+                    modeSel.classList.remove('hidden');
+                }
             }
 
             // Reseta confirmação de exclusão
@@ -1373,6 +1512,22 @@
 
             renderContractHistory(c);
             openModal('detail-modal');
+        }
+
+        function setupParcelPayment(c) {
+            currentPaymentMode = 'parcela';
+            const next = (c.parcelasPagas || 0) + 1;
+            const n = Number(c.numParcelas) || 1;
+            document.getElementById('mode-explanation').textContent =
+                `Registra o recebimento da parcela ${next} de ${n}. A parte do principal desta parcela é abatida do saldo automaticamente.`;
+            document.getElementById('pay-amount-label').textContent = `Valor da Parcela ${next}/${n}`;
+            const amountInput = document.getElementById('pay-amount');
+            amountInput.value = formatBRL(c.valorParcela);
+            amountInput.readOnly = false;
+            document.getElementById('pay-include-interest-box').classList.add('hidden');
+            document.getElementById('pay-include-interest').checked = false;
+            document.getElementById('pay-submit-btn').textContent = `Confirmar Parcela ${next} de ${n}`;
+            updatePaymentPreview();
         }
 
         function setPaymentMode(mode) {
@@ -1473,7 +1628,42 @@
 
             c.historico = c.historico || [];
 
-            if (currentPaymentMode === 'juros') {
+            if (currentPaymentMode === 'parcela') {
+                if (amount <= 0) {
+                    showToast('Informe o valor recebido da parcela.');
+                    return;
+                }
+                const n = Number(c.numParcelas) || 1;
+                const paidBefore = c.parcelasPagas || 0;
+                if (paidBefore >= n) {
+                    showToast('Todas as parcelas já foram recebidas.');
+                    return;
+                }
+                const nextNum = paidBefore + 1;
+                const saldoDepois = getInstallmentBalance(c.valorOriginal, n, nextNum);
+                const principalParte = Number((c.saldoPrincipal - saldoDepois).toFixed(2));
+                c.historico.unshift({
+                    id: 'hist-par-' + Date.now(),
+                    data: date,
+                    tipo: 'parcela',
+                    valor: Number(amount.toFixed(2)),
+                    principalParte,
+                    parcela: nextNum,
+                    competencia: currentComp,
+                    nota: note || `Parcela ${nextNum}/${n}`
+                });
+                c.parcelasPagas = nextNum;
+                c.saldoPrincipal = saldoDepois;
+                c.ultimoMesPago = currentComp;
+                if (nextNum >= n) {
+                    c.saldoPrincipal = 0;
+                    c.status = 'quitado';
+                    showToast('Última parcela recebida e contrato quitado');
+                } else {
+                    showToast(`Parcela ${nextNum} de ${n} registrada`);
+                }
+
+            } else if (currentPaymentMode === 'juros') {
                 if (amount <= 0) {
                     showToast('Informe o valor dos juros recebidos.');
                     return;
@@ -1578,7 +1768,8 @@
             const typeBadges = {
                 juros: { label: 'Juros', cls: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' },
                 amortizacao: { label: 'Amortização', cls: 'text-sky-400 bg-sky-500/10 border-sky-500/20' },
-                quitacao: { label: 'Quitação', cls: 'text-[#FAFAFA] bg-[#27272A] border-[#3F3F46]' }
+                quitacao: { label: 'Quitação', cls: 'text-[#FAFAFA] bg-[#27272A] border-[#3F3F46]' },
+                parcela: { label: 'Parcela', cls: 'text-amber-400 bg-amber-500/10 border-amber-500/20' }
             };
 
             listEl.innerHTML = hist.map(h => {
@@ -1614,6 +1805,14 @@
 
             c.historico = c.historico.filter(h => h.id !== entryId);
 
+            // Parcela estornada: recalcula parcelas pagas e saldo pelo cronograma
+            if (entry.tipo === 'parcela') {
+                const remaining = c.historico.filter(h => h.tipo === 'parcela').length;
+                c.parcelasPagas = remaining;
+                c.saldoPrincipal = getInstallmentBalance(c.valorOriginal, Number(c.numParcelas), remaining);
+                c.status = 'ativo';
+            }
+
             // Se era amortização ou quitação, devolve o valor ao saldo principal
             if (entry.tipo === 'amortizacao' || entry.tipo === 'quitacao') {
                 c.saldoPrincipal = Number((c.saldoPrincipal + Number(entry.valor)).toFixed(2));
@@ -1623,7 +1822,7 @@
             }
 
             // Recalcula ultimoMesPago com base nos registros restantes de juros
-            const lastInterest = c.historico.find(h => h.tipo === 'juros');
+            const lastInterest = c.historico.find(h => h.tipo === 'juros' || h.tipo === 'parcela');
             c.ultimoMesPago = lastInterest ? lastInterest.competencia : null;
 
             saveContracts();
@@ -1635,6 +1834,10 @@
         function reopenActiveContract() {
             const c = contracts.find(item => item.id === activeContractId);
             if (!c) return;
+            if (c.modalidade === 'parcelado') {
+                showToast('Para reabrir um contrato parcelado, estorne o último lançamento.');
+                return;
+            }
             if (c.saldoPrincipal <= 0) {
                 c.saldoPrincipal = c.valorOriginal;
             }
@@ -1685,7 +1888,9 @@
                 ? '  Nenhum contrato ativo.'
                 : arr.map(c => {
                     const mInt = getMonthlyInterest(c);
-                    const intTxt = mInt > 0 ? ` | Juros: ${formatBRL(mInt)} (${c.taxaJuros}%)` : ' | Sem juros';
+                    const intTxt = c.modalidade === 'parcelado'
+                        ? ` | Parcelado: ${c.parcelasPagas || 0}/${c.numParcelas} de ${formatBRL(c.valorParcela)}`
+                        : (mInt > 0 ? ` | Juros: ${formatBRL(mInt)} (${c.taxaJuros}%)` : ' | Sem juros');
                     return `  • ${c.pessoa}: ${formatBRL(c.saldoPrincipal)}${intTxt} [Dia ${String(c.diaRecorrente).padStart(2, '0')}]`;
                 }).join('\n');
 
