@@ -1,0 +1,1794 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#09090B">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Carteira · Gestão de Empréstimos</title>
+
+    <!-- Google Fonts: Inter & JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        obsidian: {
+                            bg: '#09090B',
+                            surface: '#121215',
+                            card: '#18181B',
+                            hover: '#1F1F23',
+                            border: '#27272A',
+                            borderLight: '#3F3F46',
+                        },
+                        ink: {
+                            primary: '#FAFAFA',
+                            secondary: '#A1A1AA',
+                            tertiary: '#71717A',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        :root {
+            --sat: env(safe-area-inset-top, 0px);
+            --sab: env(safe-area-inset-bottom, 0px);
+        }
+
+        * {
+            -webkit-tap-highlight-color: transparent;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #09090B;
+            color: #FAFAFA;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            padding-top: var(--sat);
+            padding-bottom: calc(88px + var(--sab));
+            overflow-x: hidden;
+        }
+
+        /* Previne zoom automático no iOS Safari em inputs */
+        input, select, textarea {
+            font-size: 16px !important;
+        }
+
+        .tabular-nums {
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* Oculta scrollbar mantendo funcionalidade */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* Animações suaves para drawers/modais */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes slideUp {
+            from { transform: translateY(24px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .modal-backdrop {
+            animation: fadeIn 0.18s ease-out forwards;
+        }
+        .modal-panel {
+            animation: slideUp 0.24s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            padding-bottom: calc(20px + var(--sab));
+        }
+    </style>
+</head>
+<body class="antialiased selection:bg-emerald-500/20 selection:text-emerald-300">
+
+    <!-- =====================================================================
+         CABEÇALHO FIXO MINIMALISTA
+    ====================================================================== -->
+    <header class="sticky top-0 z-30 bg-[#09090B]/90 backdrop-blur-md border-b border-[#27272A]">
+        <div class="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+                <div class="w-2 h-2 rounded-full bg-emerald-500"></div>
+                <h1 class="text-sm font-semibold tracking-tight text-[#FAFAFA]">
+                    Carteira <span class="text-[#71717A] font-normal mx-1">·</span> <span class="text-[#A1A1AA] font-normal">Gestão de Empréstimos</span>
+                </h1>
+            </div>
+
+            <button onclick="openBackupModal()" aria-label="Backup e Compartilhamento"
+                class="p-2 -mr-2 rounded-lg text-[#A1A1AA] hover:text-[#FAFAFA] hover:bg-[#18181B] transition active:scale-95 flex items-center gap-1.5 text-xs font-medium">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>
+                </svg>
+                <span class="hidden sm:inline">Backup & Relatório</span>
+                <svg class="w-4 h-4 sm:hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                </svg>
+            </button>
+        </div>
+    </header>
+
+    <!-- =====================================================================
+         CONTEÚDO PRINCIPAL
+    ====================================================================== -->
+    <main class="max-w-2xl mx-auto px-4 pt-5 space-y-5">
+
+        <!-- Painel Executivo (3 Métricas Essenciais) -->
+        <section class="bg-[#121215] rounded-2xl border border-[#27272A] p-4 sm:p-5">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-0 sm:divide-x sm:divide-[#27272A]">
+                <!-- Capital na Rua -->
+                <div class="sm:pr-4">
+                    <span class="text-[11px] uppercase tracking-wider font-medium text-[#71717A] block">
+                        Capital na Rua
+                    </span>
+                    <div id="metric-capital" class="font-mono text-2xl sm:text-xl font-semibold text-[#FAFAFA] tabular-nums mt-1">
+                        R$ 0,00
+                    </div>
+                    <span id="metric-active-count" class="text-[11px] text-[#71717A] mt-0.5 block">
+                        0 contratos ativos
+                    </span>
+                </div>
+
+                <!-- Juros / Mês -->
+                <div class="pt-3 sm:pt-0 sm:px-4 border-t sm:border-t-0 border-[#27272A]">
+                    <span class="text-[11px] uppercase tracking-wider font-medium text-[#71717A] block">
+                        Juros / Mês (Previsto)
+                    </span>
+                    <div id="metric-monthly-interest" class="font-mono text-xl font-semibold text-emerald-400 tabular-nums mt-1">
+                        R$ 0,00
+                    </div>
+                    <span id="metric-interest-yield" class="text-[11px] text-[#71717A] mt-0.5 block">
+                        Rendimento mensal
+                    </span>
+                </div>
+
+                <!-- Total Recebido -->
+                <div class="pt-3 sm:pt-0 sm:pl-4 border-t sm:border-t-0 border-[#27272A]">
+                    <span class="text-[11px] uppercase tracking-wider font-medium text-[#71717A] block">
+                        Total Recebido
+                    </span>
+                    <div id="metric-total-received" class="font-mono text-xl font-semibold text-[#FAFAFA] tabular-nums mt-1">
+                        R$ 0,00
+                    </div>
+                    <span class="text-[11px] text-[#71717A] mt-0.5 block">
+                        Juros + amortizações
+                    </span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Abas Ativos / Quitados + Busca e Filtros Rápidos -->
+        <section class="space-y-3">
+            <!-- Linha 1: Abas e Campo de Busca -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div class="flex items-center gap-4 border-b border-[#27272A] sm:border-b-0">
+                    <button type="button" onclick="setStatusTab('ativos')" data-tab="ativos"
+                        class="status-tab pb-2.5 sm:pb-1 text-xs font-semibold border-b-2 border-[#FAFAFA] text-[#FAFAFA] transition flex items-center gap-1.5">
+                        <span>Ativos</span>
+                        <span id="badge-count-ativos" class="font-mono text-[11px] px-1.5 py-0.2 rounded bg-[#18181B] text-[#A1A1AA] border border-[#27272A]">0</span>
+                    </button>
+                    <button type="button" onclick="setStatusTab('quitados')" data-tab="quitados"
+                        class="status-tab pb-2.5 sm:pb-1 text-xs font-medium border-b-2 border-transparent text-[#71717A] hover:text-[#A1A1AA] transition flex items-center gap-1.5">
+                        <span>Quitados</span>
+                        <span id="badge-count-quitados" class="font-mono text-[11px] px-1.5 py-0.2 rounded bg-[#121215] text-[#71717A] border border-[#27272A]">0</span>
+                    </button>
+                </div>
+
+                <div class="relative w-full sm:w-56">
+                    <svg class="w-3.5 h-3.5 text-[#71717A] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+                    </svg>
+                    <input type="text" id="search-input" oninput="renderContracts()" placeholder="Buscar nome ou destino..."
+                        class="w-full bg-[#121215] border border-[#27272A] focus:border-[#3F3F46] rounded-xl pl-8 pr-3 py-1.5 text-xs text-[#FAFAFA] placeholder-[#71717A] focus:outline-none transition">
+                </div>
+            </div>
+
+            <!-- Linha 2: Filtros Rápidos (apenas na aba Ativos) -->
+            <div id="quick-filters-bar" class="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+                <button type="button" onclick="setQuickFilter('todos')" data-qf="todos"
+                    class="qf-chip px-2.5 py-1 rounded-lg text-[11px] font-medium bg-[#18181B] text-[#FAFAFA] border border-[#3F3F46] whitespace-nowrap transition">
+                    Todos
+                </button>
+                <button type="button" onclick="setQuickFilter('pendentes')" data-qf="pendentes"
+                    class="qf-chip px-2.5 py-1 rounded-lg text-[11px] font-medium bg-[#121215] text-[#A1A1AA] border border-[#27272A] hover:border-[#3F3F46] whitespace-nowrap transition">
+                    Vencendo / Atrasados
+                </button>
+                <button type="button" onclick="setQuickFilter('com_juros')" data-qf="com_juros"
+                    class="qf-chip px-2.5 py-1 rounded-lg text-[11px] font-medium bg-[#121215] text-[#A1A1AA] border border-[#27272A] hover:border-[#3F3F46] whitespace-nowrap transition">
+                    Com juros
+                </button>
+                <button type="button" onclick="setQuickFilter('sem_juros')" data-qf="sem_juros"
+                    class="qf-chip px-2.5 py-1 rounded-lg text-[11px] font-medium bg-[#121215] text-[#A1A1AA] border border-[#27272A] hover:border-[#3F3F46] whitespace-nowrap transition">
+                    Sem juros
+                </button>
+            </div>
+        </section>
+
+        <!-- Lista de Contratos -->
+        <section id="contracts-list" class="space-y-2.5">
+            <!-- Renderizado via JS -->
+        </section>
+
+    </main>
+
+    <!-- =====================================================================
+         BOTÃO FLUTUANTE MINIMALISTA (+ NOVO EMPRÉSTIMO)
+    ====================================================================== -->
+    <div class="fixed bottom-0 inset-x-0 z-30 pointer-events-none" style="padding-bottom: calc(16px + var(--sab));">
+        <div class="max-w-2xl mx-auto px-4 flex justify-end">
+            <button type="button" onclick="openFormModal()"
+                class="pointer-events-auto inline-flex items-center gap-2 bg-[#FAFAFA] hover:bg-[#E4E4E7] text-[#09090B] font-semibold text-xs px-4 py-3 rounded-xl border border-[#27272A] transition active:scale-95">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+                    <path d="M12 5v14M5 12h14"/>
+                </svg>
+                <span>Novo Empréstimo</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         MODAL 1: NOVO / EDITAR EMPRÉSTIMO
+    ====================================================================== -->
+    <div id="form-modal" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-sm modal-backdrop flex items-end sm:items-center justify-center p-0 sm:p-4">
+        <div class="bg-[#121215] border-t sm:border border-[#27272A] w-full max-w-lg rounded-t-2xl sm:rounded-2xl max-h-[92vh] overflow-y-auto modal-panel">
+            <!-- Topo Modal -->
+            <div class="sticky top-0 z-10 bg-[#121215]/95 backdrop-blur px-5 py-4 border-b border-[#27272A] flex items-center justify-between">
+                <h2 id="form-modal-title" class="text-sm font-semibold text-[#FAFAFA]">Novo Empréstimo</h2>
+                <button type="button" onclick="closeModal('form-modal')" class="p-1.5 rounded-lg text-[#71717A] hover:text-[#FAFAFA] hover:bg-[#18181B]">
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                </button>
+            </div>
+
+            <form id="contract-form" onsubmit="saveContract(event)" class="p-5 space-y-4">
+                <input type="hidden" id="form-id">
+
+                <!-- Pessoa / Devedor -->
+                <div>
+                    <label for="form-person" class="block text-[11px] font-medium text-[#A1A1AA] mb-1.5">
+                        Pessoa / Devedor *
+                    </label>
+                    <input type="text" id="form-person" list="borrowers-datalist" required placeholder="Nome completo"
+                        class="w-full bg-[#18181B] border border-[#27272A] focus:border-[#FAFAFA] rounded-xl px-3.5 py-2.5 text-sm text-[#FAFAFA] placeholder-[#71717A] focus:outline-none">
+                    <datalist id="borrowers-datalist"></datalist>
+                </div>
+
+                <!-- Valor Principal -->
+                <div>
+                    <label for="form-amount" class="block text-[11px] font-medium text-[#A1A1AA] mb-1.5">
+                        Valor Emprestado (Principal) *
+                    </label>
+                    <input type="text" id="form-amount" inputmode="numeric" required placeholder="R$ 0,00"
+                        oninput="maskCurrency(this); updateFormInterestPreview();"
+                        class="w-full bg-[#18181B] border border-[#27272A] focus:border-[#FAFAFA] rounded-xl px-3.5 py-2.5 font-mono text-base font-semibold text-[#FAFAFA] placeholder-[#71717A] focus:outline-none">
+                </div>
+
+                <!-- Rendimento / Juros Mensal -->
+                <div class="bg-[#18181B] border border-[#27272A] rounded-xl p-3.5 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-medium text-[#FAFAFA]">Rendimento Mensal (Juros)</span>
+                        <div class="inline-flex bg-[#121215] p-0.5 rounded-lg border border-[#27272A]">
+                            <button type="button" id="toggle-has-interest" onclick="setInterestMode(true)"
+                                class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-[#27272A] text-[#FAFAFA] transition">
+                                Com Juros
+                            </button>
+                            <button type="button" id="toggle-no-interest" onclick="setInterestMode(false)"
+                                class="px-2.5 py-1 rounded-md text-[11px] font-medium text-[#71717A] transition">
+                                Sem Juros
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="interest-config-area" class="space-y-2.5">
+                        <!-- Atalhos de Taxa + Campo Numérico -->
+                        <div class="flex items-center gap-1.5">
+                            <button type="button" onclick="setQuickRate(1)" class="rate-chip px-2.5 py-1.5 rounded-lg bg-[#121215] border border-[#27272A] hover:border-[#3F3F46] font-mono text-xs text-[#A1A1AA]">1%</button>
+                            <button type="button" onclick="setQuickRate(2)" class="rate-chip px-2.5 py-1.5 rounded-lg bg-[#121215] border border-[#27272A] hover:border-[#3F3F46] font-mono text-xs text-[#A1A1AA]">2%</button>
+                            <button type="button" onclick="setQuickRate(5)" class="rate-chip px-2.5 py-1.5 rounded-lg bg-[#121215] border border-[#27272A] hover:border-[#3F3F46] font-mono text-xs text-[#A1A1AA]">5%</button>
+                            <button type="button" onclick="setQuickRate(10)" class="rate-chip px-2.5 py-1.5 rounded-lg bg-[#121215] border border-[#27272A] hover:border-[#3F3F46] font-mono text-xs text-[#A1A1AA]">10%</button>
+
+                            <div class="relative flex-1">
+                                <input type="number" id="form-rate" step="0.1" min="0" max="100" value="5"
+                                    oninput="updateFormInterestPreview()"
+                                    class="w-full bg-[#121215] border border-[#27272A] focus:border-[#FAFAFA] rounded-lg pl-3 pr-9 py-1.5 font-mono text-xs text-[#FAFAFA] text-right focus:outline-none">
+                                <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-[11px] text-[#71717A] font-mono">% a.m.</span>
+                            </div>
+                        </div>
+
+                        <!-- Preview em tempo real -->
+                        <div class="flex items-center justify-between pt-2 border-t border-[#27272A] text-xs">
+                            <span class="text-[#71717A]">Rendimento previsto / mês:</span>
+                            <span id="form-interest-preview" class="font-mono font-semibold text-emerald-400 tabular-nums">R$ 0,00 / mês</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dia Recorrente + Data de Início -->
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label for="form-due-day" class="block text-[11px] font-medium text-[#A1A1AA] mb-1.5">
+                            Dia Recorrente (1 a 31) *
+                        </label>
+                        <select id="form-due-day" required
+                            class="w-full bg-[#18181B] border border-[#27272A] focus:border-[#FAFAFA] rounded-xl px-3 py-2.5 font-mono text-sm text-[#FAFAFA] focus:outline-none">
+                            <!-- Populado via JS -->
+                        </select>
+                    </div>
+                    <div>
+                        <label for="form-start-date" class="block text-[11px] font-medium text-[#A1A1AA] mb-1.5">
+                            Data do Empréstimo *
+                        </label>
+                        <input type="date" id="form-start-date" required
+                            class="w-full bg-[#18181B] border border-[#27272A] focus:border-[#FAFAFA] rounded-xl px-3 py-2.5 text-sm text-[#FAFAFA] focus:outline-none">
+                    </div>
+                </div>
+
+                <!-- Destinação -->
+                <div>
+                    <label class="block text-[11px] font-medium text-[#A1A1AA] mb-1.5">
+                        Destinação / Finalidade
+                    </label>
+                    <div class="flex flex-wrap gap-1.5 mb-2" id="destination-chips">
+                        <button type="button" onclick="selectDestinationChip('Emergência')" class="dest-chip px-2.5 py-1 rounded-lg text-xs bg-[#18181B] text-[#A1A1AA] border border-[#27272A] transition">Emergência</button>
+                        <button type="button" onclick="selectDestinationChip('Veículo')" class="dest-chip px-2.5 py-1 rounded-lg text-xs bg-[#18181B] text-[#A1A1AA] border border-[#27272A] transition">Veículo</button>
+                        <button type="button" onclick="selectDestinationChip('Negócio')" class="dest-chip px-2.5 py-1 rounded-lg text-xs bg-[#18181B] text-[#A1A1AA] border border-[#27272A] transition">Negócio</button>
+                        <button type="button" onclick="selectDestinationChip('Cartão')" class="dest-chip px-2.5 py-1 rounded-lg text-xs bg-[#18181B] text-[#A1A1AA] border border-[#27272A] transition">Cartão</button>
+                        <button type="button" onclick="selectDestinationChip('Pessoal')" class="dest-chip px-2.5 py-1 rounded-lg text-xs bg-[#18181B] text-[#A1A1AA] border border-[#27272A] transition">Pessoal</button>
+                        <button type="button" onclick="selectDestinationChip('Outro')" class="dest-chip px-2.5 py-1 rounded-lg text-xs bg-[#18181B] text-[#A1A1AA] border border-[#27272A] transition">Outro</button>
+                    </div>
+                    <input type="text" id="form-destination" placeholder="Ou digite outra destinação..."
+                        oninput="syncDestinationChips()"
+                        class="w-full bg-[#18181B] border border-[#27272A] focus:border-[#FAFAFA] rounded-xl px-3.5 py-2 text-xs text-[#FAFAFA] placeholder-[#71717A] focus:outline-none">
+                </div>
+
+                <!-- Descrição / Observações -->
+                <div>
+                    <label for="form-notes" class="block text-[11px] font-medium text-[#A1A1AA] mb-1.5">
+                        Descrição / Observações
+                    </label>
+                    <textarea id="form-notes" rows="2" placeholder="Detalhes combinados, chave Pix, garantia..."
+                        class="w-full bg-[#18181B] border border-[#27272A] focus:border-[#FAFAFA] rounded-xl px-3.5 py-2 text-xs text-[#FAFAFA] placeholder-[#71717A] focus:outline-none resize-none"></textarea>
+                </div>
+
+                <!-- Comprovante (Imagem comprimida) -->
+                <div>
+                    <label class="block text-[11px] font-medium text-[#A1A1AA] mb-1.5">
+                        Comprovante (Pix / Transferência)
+                    </label>
+                    <div id="receipt-upload-box" class="border border-dashed border-[#27272A] hover:border-[#3F3F46] rounded-xl p-3 bg-[#18181B]/50 transition">
+                        <label id="receipt-input-label" class="cursor-pointer flex items-center justify-center gap-2 py-1.5 text-xs text-[#A1A1AA] hover:text-[#FAFAFA]">
+                            <svg class="w-4 h-4 text-[#71717A]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
+                            </svg>
+                            <span>Anexar imagem do comprovante</span>
+                            <input type="file" id="form-receipt-file" accept="image/*" onchange="handleReceiptUpload(event)" class="hidden">
+                        </label>
+
+                        <div id="receipt-preview-container" class="hidden flex items-center justify-between gap-3">
+                            <div class="flex items-center gap-2.5">
+                                <img id="receipt-preview-img" src="" alt="Comprovante" class="w-12 h-12 rounded-lg object-cover border border-[#27272A]">
+                                <div>
+                                    <span class="text-xs font-medium text-[#FAFAFA] block">Comprovante anexado</span>
+                                    <span class="text-[11px] text-[#71717A]">Otimizado para armazenamento local</span>
+                                </div>
+                            </div>
+                            <button type="button" onclick="removeFormReceipt()" class="p-1.5 rounded-lg text-[#71717A] hover:text-red-400 hover:bg-[#121215]">
+                                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Botões Salvar / Cancelar -->
+                <div class="pt-2 flex gap-2.5">
+                    <button type="button" onclick="closeModal('form-modal')"
+                        class="flex-1 py-2.5 rounded-xl bg-[#18181B] hover:bg-[#1F1F23] border border-[#27272A] text-xs font-medium text-[#A1A1AA] transition">
+                        Cancelar
+                    </button>
+                    <button type="submit"
+                        class="flex-1 py-2.5 rounded-xl bg-[#FAFAFA] hover:bg-[#E4E4E7] text-xs font-semibold text-[#09090B] transition">
+                        Salvar Contrato
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         MODAL 2: DETALHES DO CONTRATO & FLUXO DE RECEBIMENTO EM 3 MODOS
+    ====================================================================== -->
+    <div id="detail-modal" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-sm modal-backdrop flex items-end sm:items-center justify-center p-0 sm:p-4">
+        <div class="bg-[#121215] border-t sm:border border-[#27272A] w-full max-w-lg rounded-t-2xl sm:rounded-2xl max-h-[92vh] overflow-y-auto modal-panel">
+            <!-- Cabeçalho do Detalhe -->
+            <div class="sticky top-0 z-10 bg-[#121215]/95 backdrop-blur px-5 py-4 border-b border-[#27272A] flex items-start justify-between gap-3">
+                <div>
+                    <div class="flex items-center gap-2 mb-1">
+                        <span id="det-dest-badge" class="text-[10px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded bg-[#18181B] border border-[#27272A] text-[#A1A1AA]">Destinação</span>
+                        <span id="det-month-badge" class="text-[11px] font-medium px-2 py-0.5 rounded-md">Status</span>
+                    </div>
+                    <h2 id="det-person" class="text-base font-semibold text-[#FAFAFA]">Nome do Devedor</h2>
+                </div>
+                <button type="button" onclick="closeModal('detail-modal')" class="p-1.5 rounded-lg text-[#71717A] hover:text-[#FAFAFA] hover:bg-[#18181B]">
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                </button>
+            </div>
+
+            <div class="p-5 space-y-5">
+                <!-- Bloco Numérico Principal -->
+                <div class="bg-[#18181B] border border-[#27272A] rounded-xl p-4 space-y-3">
+                    <div class="flex items-baseline justify-between">
+                        <div>
+                            <span class="text-[11px] text-[#71717A] block">Saldo Principal Atual</span>
+                            <span id="det-balance" class="font-mono text-2xl font-semibold text-[#FAFAFA] tabular-nums">R$ 0,00</span>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-[11px] text-[#71717A] block">Juros / Mês</span>
+                            <span id="det-monthly-interest" class="font-mono text-sm font-semibold text-emerald-400 tabular-nums">R$ 0,00</span>
+                        </div>
+                    </div>
+
+                    <div class="pt-3 border-t border-[#27272A] grid grid-cols-3 gap-2 text-xs">
+                        <div>
+                            <span class="text-[10px] text-[#71717A] block">Valor Inicial</span>
+                            <span id="det-original" class="font-mono text-[#A1A1AA] tabular-nums">R$ 0,00</span>
+                        </div>
+                        <div>
+                            <span class="text-[10px] text-[#71717A] block">Taxa Mensal</span>
+                            <span id="det-rate" class="font-mono text-[#A1A1AA]">0% a.m.</span>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-[10px] text-[#71717A] block">Vencimento</span>
+                            <span id="det-due-day" class="font-mono text-[#FAFAFA]">Todo dia 10</span>
+                        </div>
+                    </div>
+
+                    <div id="det-notes-box" class="hidden pt-2.5 border-t border-[#27272A] text-xs text-[#A1A1AA]">
+                        <!-- Observações -->
+                    </div>
+                </div>
+
+                <!-- Barra de Ações Rápidas (WhatsApp + Comprovante) -->
+                <div class="grid grid-cols-2 gap-2.5">
+                    <button type="button" onclick="shareContractWhatsApp()"
+                        class="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-[#18181B] hover:bg-[#1F1F23] border border-[#27272A] text-xs font-medium text-[#FAFAFA] transition">
+                        <svg class="w-3.5 h-3.5 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
+                        </svg>
+                        <span>Cobrar / Resumo</span>
+                    </button>
+
+                    <button type="button" id="det-receipt-btn" onclick="handleDetailReceiptAction()"
+                        class="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-[#18181B] hover:bg-[#1F1F23] border border-[#27272A] text-xs font-medium text-[#FAFAFA] transition">
+                        <svg class="w-3.5 h-3.5 text-[#A1A1AA]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
+                        </svg>
+                        <span id="det-receipt-btn-label">Ver Comprovante</span>
+                    </button>
+                    <input type="file" id="det-quick-receipt-input" accept="image/*" onchange="attachReceiptToActiveContract(event)" class="hidden">
+                </div>
+
+                <!-- ===========================================================
+                     AÇÃO PRINCIPAL: REGISTRAR RECEBIMENTO (3 MODOS)
+                ============================================================ -->
+                <div id="receive-payment-section" class="bg-[#18181B] border border-[#27272A] rounded-xl p-4 space-y-3.5">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-xs font-semibold uppercase tracking-wider text-[#FAFAFA]">
+                            Registrar Recebimento
+                        </h3>
+                        <span id="receive-competence-label" class="font-mono text-[11px] text-[#71717A]">Comp: 11/2026</span>
+                    </div>
+
+                    <!-- Seletor dos 3 Modos -->
+                    <div class="grid grid-cols-3 gap-1 bg-[#121215] p-1 rounded-xl border border-[#27272A]">
+                        <button type="button" id="mode-btn-juros" onclick="setPaymentMode('juros')"
+                            class="pay-mode-btn py-2 px-1.5 rounded-lg text-[11px] font-medium text-[#FAFAFA] bg-[#27272A] transition text-center leading-tight">
+                            Só Juros
+                        </button>
+                        <button type="button" id="mode-btn-amortizacao" onclick="setPaymentMode('amortizacao')"
+                            class="pay-mode-btn py-2 px-1.5 rounded-lg text-[11px] font-medium text-[#71717A] hover:text-[#A1A1AA] transition text-center leading-tight">
+                            Abater Principal
+                        </button>
+                        <button type="button" id="mode-btn-quitacao" onclick="setPaymentMode('quitacao')"
+                            class="pay-mode-btn py-2 px-1.5 rounded-lg text-[11px] font-medium text-[#71717A] hover:text-[#A1A1AA] transition text-center leading-tight">
+                            Quitar Total
+                        </button>
+                    </div>
+
+                    <!-- Formulário Dinâmico conforme Modo -->
+                    <form onsubmit="submitPayment(event)" class="space-y-3">
+                        <p id="mode-explanation" class="text-[11px] text-[#A1A1AA] leading-relaxed">
+                            Recebe o rendimento mensal e mantém o saldo principal intacto para o próximo mês.
+                        </p>
+
+                        <!-- Campo Principal de Valor -->
+                        <div id="pay-field-main">
+                            <label id="pay-amount-label" class="block text-[11px] font-medium text-[#A1A1AA] mb-1">
+                                Valor dos Juros Recebidos
+                            </label>
+                            <input type="text" id="pay-amount" inputmode="numeric" required
+                                oninput="maskCurrency(this); updatePaymentPreview();"
+                                class="w-full bg-[#121215] border border-[#27272A] focus:border-emerald-500 rounded-xl px-3.5 py-2.5 font-mono text-base font-semibold text-emerald-400 focus:outline-none">
+                        </div>
+
+                        <!-- Checkbox Opcional: Somar Juros do Mês (usado em Amortização e Quitação) -->
+                        <div id="pay-include-interest-box" class="hidden flex items-center justify-between bg-[#121215] border border-[#27272A] rounded-xl px-3 py-2.5">
+                            <label for="pay-include-interest" class="text-xs text-[#A1A1AA] cursor-pointer select-none">
+                                Incluir juros deste mês (<span id="pay-extra-interest-val" class="font-mono text-[#FAFAFA]">R$ 0,00</span>)
+                            </label>
+                            <input type="checkbox" id="pay-include-interest" onchange="updatePaymentPreview()"
+                                class="w-4 h-4 accent-emerald-500 rounded cursor-pointer">
+                        </div>
+
+                        <!-- Data e Observação curta -->
+                        <div class="grid grid-cols-2 gap-2.5">
+                            <div>
+                                <label class="block text-[11px] font-medium text-[#71717A] mb-1">Data</label>
+                                <input type="date" id="pay-date" required
+                                    class="w-full bg-[#121215] border border-[#27272A] rounded-xl px-3 py-2 text-xs text-[#FAFAFA] focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-medium text-[#71717A] mb-1">Nota (Opcional)</label>
+                                <input type="text" id="pay-note" placeholder="Ex: Via Pix"
+                                    class="w-full bg-[#121215] border border-[#27272A] rounded-xl px-3 py-2 text-xs text-[#FAFAFA] placeholder-[#71717A] focus:outline-none">
+                            </div>
+                        </div>
+
+                        <!-- Resumo da operação antes de confirmar -->
+                        <div id="pay-summary-line" class="flex items-center justify-between text-xs pt-1 text-[#A1A1AA]">
+                            <span>Total a registrar agora:</span>
+                            <span id="pay-total-preview" class="font-mono font-semibold text-[#FAFAFA]">R$ 0,00</span>
+                        </div>
+
+                        <button type="submit" id="pay-submit-btn"
+                            class="w-full py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-[#09090B] font-semibold text-xs transition active:scale-[0.99]">
+                            Confirmar Recebimento de Juros
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Banner se contrato já estiver Quitado -->
+                <div id="settled-banner" class="hidden bg-[#18181B] border border-[#27272A] rounded-xl p-4 flex items-center justify-between">
+                    <div>
+                        <span class="text-xs font-semibold text-emerald-400 block">Contrato Quitado</span>
+                        <span class="text-[11px] text-[#71717A]">Saldo principal zerado e encerrado.</span>
+                    </div>
+                    <button type="button" onclick="reopenActiveContract()"
+                        class="px-3 py-1.5 rounded-lg bg-[#121215] border border-[#27272A] hover:border-[#3F3F46] text-xs text-[#A1A1AA] hover:text-[#FAFAFA] transition">
+                        Reabrir Contrato
+                    </button>
+                </div>
+
+                <!-- Extrato / Histórico Cronológico do Contrato -->
+                <div class="space-y-2.5">
+                    <h3 class="text-xs font-semibold uppercase tracking-wider text-[#71717A]">
+                        Extrato de Movimentações
+                    </h3>
+                    <div id="det-history-list" class="space-y-2">
+                        <!-- Renderizado via JS -->
+                    </div>
+                </div>
+
+                <!-- Rodapé Discreto: Editar e Excluir Contrato -->
+                <div class="pt-3 border-t border-[#27272A] flex items-center justify-between">
+                    <button type="button" id="btn-delete-contract" onclick="handleDeleteContract()"
+                        class="text-xs text-[#71717A] hover:text-red-400 py-1.5 px-2 rounded-lg transition">
+                        Excluir Contrato
+                    </button>
+                    <button type="button" onclick="editActiveContract()"
+                        class="text-xs font-medium text-[#A1A1AA] hover:text-[#FAFAFA] bg-[#18181B] border border-[#27272A] px-3 py-1.5 rounded-lg transition">
+                        Editar Contrato
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         MODAL 3: VISUALIZADOR DE COMPROVANTE EM TELA CHEIA
+    ====================================================================== -->
+    <div id="receipt-viewer-modal" class="fixed inset-0 z-50 hidden bg-black/95 backdrop-blur-md modal-backdrop flex flex-col justify-between p-4" style="padding-top: calc(16px + var(--sat)); padding-bottom: calc(16px + var(--sab));">
+        <div class="flex items-center justify-between max-w-2xl w-full mx-auto">
+            <span class="text-xs font-medium text-[#A1A1AA]">Comprovante Anexado</span>
+            <div class="flex items-center gap-2">
+                <label class="cursor-pointer px-3 py-1.5 rounded-lg bg-[#18181B] border border-[#27272A] text-xs text-[#FAFAFA]">
+                    Trocar Foto
+                    <input type="file" accept="image/*" onchange="attachReceiptToActiveContract(event)" class="hidden">
+                </label>
+                <button type="button" onclick="closeModal('receipt-viewer-modal')" class="p-2 rounded-lg bg-[#18181B] border border-[#27272A] text-[#FAFAFA]">
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                </button>
+            </div>
+        </div>
+
+        <div class="flex-1 flex items-center justify-center overflow-hidden my-4">
+            <img id="full-receipt-image" src="" alt="Comprovante" class="max-h-full max-w-full rounded-xl border border-[#27272A] object-contain">
+        </div>
+
+        <div class="max-w-2xl w-full mx-auto flex justify-center">
+            <button type="button" onclick="removeReceiptFromActiveContract()" class="text-xs text-red-400 hover:underline py-1">
+                Remover Comprovante
+            </button>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         MODAL 4: BACKUP, IMPORTAÇÃO E RELATÓRIO GERAL
+    ====================================================================== -->
+    <div id="backup-modal" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-sm modal-backdrop flex items-end sm:items-center justify-center p-0 sm:p-4">
+        <div class="bg-[#121215] border-t sm:border border-[#27272A] w-full max-w-lg rounded-t-2xl sm:rounded-2xl max-h-[90vh] overflow-y-auto modal-panel">
+            <div class="px-5 py-4 border-b border-[#27272A] flex items-center justify-between">
+                <h2 class="text-sm font-semibold text-[#FAFAFA]">Backup & Relatório</h2>
+                <button type="button" onclick="closeModal('backup-modal')" class="p-1.5 rounded-lg text-[#71717A] hover:text-[#FAFAFA]">
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                </button>
+            </div>
+
+            <div class="p-5 space-y-5">
+                <!-- Relatório Geral para WhatsApp -->
+                <div class="bg-[#18181B] border border-[#27272A] rounded-xl p-4 space-y-2.5">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-semibold text-[#FAFAFA]">Relatório Consolidado (WhatsApp)</span>
+                        <span class="text-[11px] text-[#71717A]">Carteira Ativa</span>
+                    </div>
+                    <p class="text-[11px] text-[#A1A1AA]">
+                        Gera um resumo enxuto com todos os contratos ativos, saldos na rua e juros previstos do mês.
+                    </p>
+                    <div class="flex gap-2 pt-1">
+                        <button type="button" onclick="copyGeneralReport()"
+                            class="flex-1 py-2 rounded-lg bg-[#121215] hover:bg-[#1F1F23] border border-[#27272A] text-xs font-medium text-[#FAFAFA] transition">
+                            Copiar Relatório
+                        </button>
+                        <a id="general-whatsapp-link" href="#" target="_blank" rel="noopener noreferrer"
+                            class="flex-1 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-xs font-semibold text-[#09090B] text-center transition">
+                            Enviar WhatsApp
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Exportar e Importar JSON -->
+                <div class="space-y-2.5">
+                    <span class="text-xs font-semibold text-[#FAFAFA] block">Backup de Segurança (.JSON)</span>
+                    <p class="text-[11px] text-[#71717A] leading-relaxed">
+                        Exporte seus contratos e comprovantes em um único arquivo para guardar com segurança ou restaurar em outro aparelho.
+                    </p>
+                    <div class="grid grid-cols-2 gap-2.5 pt-1">
+                        <button type="button" onclick="exportBackupJSON()"
+                            class="py-2.5 px-3 rounded-xl bg-[#18181B] hover:bg-[#1F1F23] border border-[#27272A] text-xs font-medium text-[#FAFAFA] transition">
+                            Exportar Backup
+                        </button>
+                        <label class="cursor-pointer py-2.5 px-3 rounded-xl bg-[#18181B] hover:bg-[#1F1F23] border border-[#27272A] text-xs font-medium text-[#FAFAFA] text-center transition">
+                            Importar Backup
+                            <input type="file" accept=".json" onchange="importBackupJSON(event)" class="hidden">
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Resetar Dados -->
+                <div class="pt-4 border-t border-[#27272A] flex items-center justify-between">
+                    <span class="text-[11px] text-[#71717A]">Armazenamento 100% local</span>
+                    <button type="button" id="btn-reset-all" onclick="handleResetAllData()"
+                        class="text-xs text-[#71717A] hover:text-red-400 transition">
+                        Limpar todos os dados
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         TOAST MINIMALISTA DE FEEDBACK
+    ====================================================================== -->
+    <div id="toast" class="fixed top-16 left-1/2 -translate-x-1/2 z-50 hidden items-center gap-2 px-3.5 py-2 rounded-xl bg-[#18181B] border border-[#3F3F46] text-xs font-medium text-[#FAFAFA] shadow-lg">
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+        <span id="toast-msg">Salvo</span>
+    </div>
+
+    <!-- =====================================================================
+         LÓGICA JAVASCRIPT (AUTOCONTIDA E ESTRUTURADA)
+    ====================================================================== -->
+    <script>
+        const STORAGE_KEY = 'carteira_emprestimos_v1';
+
+        // Estado global da aplicação
+        let contracts = [];
+        let filterStatusTab = 'ativos';  // 'ativos' | 'quitados'
+        let filterQuick = 'todos';       // 'todos' | 'pendentes' | 'com_juros' | 'sem_juros'
+
+        let activeContractId = null;
+        let currentPaymentMode = 'juros'; // 'juros' | 'amortizacao' | 'quitacao'
+        let tempFormReceiptBase64 = null;
+        let hasInterestFlag = true;
+
+        let deleteConfirmTimer = null;
+        let deleteConfirmArmed = false;
+        let resetConfirmTimer = null;
+        let resetConfirmArmed = false;
+
+        // =================================================================
+        // 1. INICIALIZAÇÃO E PERSISTÊNCIA (100% LIMPO NA PRIMEIRA ABERTURA)
+        // =================================================================
+        window.addEventListener('DOMContentLoaded', () => {
+            populateDueDaySelect();
+            loadContracts();
+            renderApp();
+        });
+
+        function populateDueDaySelect() {
+            const select = document.getElementById('form-due-day');
+            select.innerHTML = '';
+            for (let d = 1; d <= 31; d++) {
+                const opt = document.createElement('option');
+                opt.value = d;
+                opt.textContent = `Dia ${String(d).padStart(2, '0')}`;
+                select.appendChild(opt);
+            }
+        }
+
+        function loadContracts() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (raw) {
+                    const parsed = JSON.parse(raw);
+                    contracts = Array.isArray(parsed) ? parsed : [];
+                } else {
+                    contracts = [];
+                    saveContracts();
+                }
+            } catch (e) {
+                console.error('Erro ao ler localStorage:', e);
+                contracts = [];
+            }
+        }
+
+        function saveContracts() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(contracts));
+            } catch (e) {
+                showToast('Limite de armazenamento atingido. Remova comprovantes antigos.');
+            }
+        }
+
+        // =================================================================
+        // 2. UTILITÁRIOS DE DATA, MOEDA E COMPETÊNCIA
+        // =================================================================
+        function formatBRL(val) {
+            return new Intl.NumberFormat('pt-BR', {
+                style: 'currency',
+                currency: 'BRL'
+            }).format(Number(val) || 0);
+        }
+
+        function maskCurrency(input) {
+            const digits = input.value.replace(/\D/g, '');
+            if (!digits) {
+                input.value = '';
+                return;
+            }
+            const amount = parseInt(digits, 10) / 100;
+            input.value = formatBRL(amount);
+        }
+
+        function parseCurrency(str) {
+            if (!str) return 0;
+            const cleaned = str.replace(/[^\d,]/g, '').replace(',', '.');
+            return parseFloat(cleaned) || 0;
+        }
+
+        function getTodayISO() {
+            const d = new Date();
+            const offset = d.getTimezoneOffset() * 60000;
+            return new Date(d - offset).toISOString().split('T')[0];
+        }
+
+        function getCurrentCompetence() {
+            const d = new Date();
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            return `${y}-${m}`; // ex: "2026-11"
+        }
+
+        function formatDateBR(iso) {
+            if (!iso) return '';
+            const [y, m, d] = iso.split('-');
+            return `${d}/${m}/${y}`;
+        }
+
+        function getMonthlyInterest(contract) {
+            if (contract.status === 'quitado' || !contract.taxaJuros || contract.taxaJuros <= 0) return 0;
+            return Number(((contract.saldoPrincipal * contract.taxaJuros) / 100).toFixed(2));
+        }
+
+        function getDueStatusInfo(contract) {
+            const today = new Date();
+            const currentDay = today.getDate();
+            const currentComp = getCurrentCompetence();
+            const dueDay = Number(contract.diaRecorrente);
+
+            if (contract.status === 'quitado') {
+                return { state: 'quitado', label: 'Quitado', className: 'bg-zinc-800 text-[#A1A1AA]' };
+            }
+
+            if (contract.ultimoMesPago === currentComp) {
+                return {
+                    state: 'pago_mes',
+                    label: 'Pago este mês',
+                    className: 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                };
+            }
+
+            if (currentDay > dueDay) {
+                return {
+                    state: 'atrasado',
+                    label: `Em atraso (dia ${String(dueDay).padStart(2, '0')})`,
+                    className: 'bg-red-500/10 text-red-400 border border-red-500/20'
+                };
+            }
+
+            if (currentDay === dueDay) {
+                return {
+                    state: 'vence_hoje',
+                    label: 'Vence hoje',
+                    className: 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                };
+            }
+
+            return {
+                state: 'futuro',
+                label: `Todo dia ${String(dueDay).padStart(2, '0')}`,
+                className: 'text-[#71717A]'
+            };
+        }
+
+        function escapeHTML(str) {
+            return String(str || '').replace(/[&<>"']/g, m => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            })[m]);
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-msg').textContent = msg;
+            toast.classList.remove('hidden');
+            toast.classList.add('flex');
+            clearTimeout(toast._t);
+            toast._t = setTimeout(() => {
+                toast.classList.add('hidden');
+                toast.classList.remove('flex');
+            }, 2600);
+        }
+
+        // =================================================================
+        // 3. RENDERIZAÇÃO PRINCIPAL (DASHBOARD + LISTA)
+        // =================================================================
+        function renderApp() {
+            updateBorrowersDatalist();
+            renderMetrics();
+            renderContracts();
+        }
+
+        function updateBorrowersDatalist() {
+            const dl = document.getElementById('borrowers-datalist');
+            const names = [...new Set(contracts.map(c => c.pessoa).filter(Boolean))];
+            dl.innerHTML = names.map(n => `<option value="${escapeHTML(n)}">`).join('');
+        }
+
+        function setStatusTab(tab) {
+            filterStatusTab = tab;
+            document.querySelectorAll('.status-tab').forEach(btn => {
+                const active = btn.dataset.tab === tab;
+                btn.className = active
+                    ? 'status-tab pb-2.5 sm:pb-1 text-xs font-semibold border-b-2 border-[#FAFAFA] text-[#FAFAFA] transition flex items-center gap-1.5'
+                    : 'status-tab pb-2.5 sm:pb-1 text-xs font-medium border-b-2 border-transparent text-[#71717A] hover:text-[#A1A1AA] transition flex items-center gap-1.5';
+            });
+
+            const qfBar = document.getElementById('quick-filters-bar');
+            if (tab === 'ativos') {
+                qfBar.classList.remove('hidden');
+            } else {
+                qfBar.classList.add('hidden');
+            }
+            renderContracts();
+        }
+
+        function setQuickFilter(qf) {
+            filterQuick = qf;
+            document.querySelectorAll('.qf-chip').forEach(btn => {
+                const active = btn.dataset.qf === qf;
+                btn.className = active
+                    ? 'qf-chip px-2.5 py-1 rounded-lg text-[11px] font-medium bg-[#18181B] text-[#FAFAFA] border border-[#3F3F46] whitespace-nowrap transition'
+                    : 'qf-chip px-2.5 py-1 rounded-lg text-[11px] font-medium bg-[#121215] text-[#A1A1AA] border border-[#27272A] hover:border-[#3F3F46] whitespace-nowrap transition';
+            });
+            renderContracts();
+        }
+
+        function renderMetrics() {
+            const activeList = contracts.filter(c => c.status === 'ativo');
+
+            const capitalNaRua = activeList.reduce((sum, c) => sum + Number(c.saldoPrincipal), 0);
+            const jurosMensais = activeList.reduce((sum, c) => sum + getMonthlyInterest(c), 0);
+
+            // Total recebido histórico (juros + amortizações + quitações)
+            const totalRecebido = contracts.reduce((sum, c) => {
+                const contractPaid = (c.historico || []).reduce((acc, h) => acc + Number(h.valor), 0);
+                return sum + contractPaid;
+            }, 0);
+
+            document.getElementById('metric-capital').textContent = formatBRL(capitalNaRua);
+            document.getElementById('metric-active-count').textContent = `${activeList.length} ${activeList.length === 1 ? 'contrato ativo' : 'contratos ativos'}`;
+            document.getElementById('metric-monthly-interest').textContent = formatBRL(jurosMensais);
+
+            const avgYield = capitalNaRua > 0 ? ((jurosMensais / capitalNaRua) * 100).toFixed(1).replace('.', ',') : '0';
+            document.getElementById('metric-interest-yield').textContent = capitalNaRua > 0 ? `Média de ${avgYield}% a.m.` : 'Rendimento mensal';
+
+            document.getElementById('metric-total-received').textContent = formatBRL(totalRecebido);
+        }
+
+        function renderContracts() {
+            const container = document.getElementById('contracts-list');
+            const search = document.getElementById('search-input').value.trim().toLowerCase();
+            const currentComp = getCurrentCompetence();
+            const currentDay = new Date().getDate();
+
+            // Atualiza contadores das abas
+            const totalAtivos = contracts.filter(c => c.status === 'ativo').length;
+            const totalQuitados = contracts.filter(c => c.status === 'quitado').length;
+            document.getElementById('badge-count-ativos').textContent = totalAtivos;
+            document.getElementById('badge-count-quitados').textContent = totalQuitados;
+
+            // Estado inicial elegante quando a carteira está completamente vazia
+            if (contracts.length === 0) {
+                container.innerHTML = `
+                    <div class="bg-[#121215] border border-[#27272A] rounded-2xl p-8 sm:p-10 text-center space-y-3">
+                        <div class="w-10 h-10 rounded-xl bg-[#18181B] border border-[#27272A] mx-auto flex items-center justify-center text-[#A1A1AA]">
+                            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+                                <path d="M12 5v14M5 12h14"/>
+                            </svg>
+                        </div>
+                        <div class="space-y-1">
+                            <p class="text-sm font-medium text-[#FAFAFA]">Sua carteira está pronta</p>
+                            <p class="text-xs text-[#71717A] max-w-xs mx-auto leading-relaxed">
+                                Registre seu primeiro empréstimo para acompanhar o capital na rua, os dias de cobrança e os rendimentos mensais.
+                            </p>
+                        </div>
+                        <div class="pt-1">
+                            <button type="button" onclick="openFormModal()"
+                                class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#18181B] hover:bg-[#1F1F23] border border-[#3F3F46] text-xs font-medium text-[#FAFAFA] transition">
+                                Cadastrar primeiro empréstimo
+                            </button>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            // Filtra pela aba (ativos ou quitados)
+            let list = contracts.filter(c => (filterStatusTab === 'ativos' ? c.status === 'ativo' : c.status === 'quitado'));
+
+            // Filtros rápidos (quando na aba Ativos)
+            if (filterStatusTab === 'ativos') {
+                if (filterQuick === 'pendentes') {
+                    list = list.filter(c => c.ultimoMesPago !== currentComp && currentDay >= Number(c.diaRecorrente));
+                } else if (filterQuick === 'com_juros') {
+                    list = list.filter(c => Number(c.taxaJuros) > 0);
+                } else if (filterQuick === 'sem_juros') {
+                    list = list.filter(c => !c.taxaJuros || Number(c.taxaJuros) <= 0);
+                }
+            }
+
+            // Busca textual
+            if (search) {
+                list = list.filter(c =>
+                    c.pessoa.toLowerCase().includes(search) ||
+                    (c.destinacao || '').toLowerCase().includes(search) ||
+                    (c.descricao || '').toLowerCase().includes(search)
+                );
+            }
+
+            // Ordenação inteligente: pendentes/atrasados primeiro, depois por dia recorrente
+            list.sort((a, b) => {
+                if (filterStatusTab === 'ativos') {
+                    const aPaid = a.ultimoMesPago === currentComp ? 1 : 0;
+                    const bPaid = b.ultimoMesPago === currentComp ? 1 : 0;
+                    if (aPaid !== bPaid) return aPaid - bPaid;
+                    return Number(a.diaRecorrente) - Number(b.diaRecorrente);
+                }
+                return 0;
+            });
+
+            if (list.length === 0) {
+                container.innerHTML = `
+                    <div class="bg-[#121215] border border-[#27272A] rounded-2xl p-8 text-center">
+                        <p class="text-xs font-medium text-[#A1A1AA]">Nenhum contrato encontrado neste filtro</p>
+                        <p class="text-[11px] text-[#71717A] mt-1">
+                            Altere os filtros acima ou limpe a busca para visualizar outros registros.
+                        </p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = list.map(c => {
+                const monthlyInt = getMonthlyInterest(c);
+                const statusInfo = getDueStatusInfo(c);
+                const hasInterest = Number(c.taxaJuros) > 0;
+
+                const interestLine = hasInterest
+                    ? `<span class="font-mono text-emerald-400 font-medium">${String(c.taxaJuros).replace('.', ',')}% · ${formatBRL(monthlyInt)}/mês</span>`
+                    : `<span class="text-[#71717A]">Sem juros</span>`;
+
+                const statusTag = statusInfo.state === 'futuro'
+                    ? `<span class="font-mono text-[11px] text-[#71717A]">${statusInfo.label}</span>`
+                    : `<span class="text-[11px] font-medium px-2 py-0.5 rounded-md ${statusInfo.className}">${statusInfo.label}</span>`;
+
+                return `
+                    <article onclick="openDetailModal('${c.id}')"
+                        class="cursor-pointer bg-[#121215] hover:bg-[#18181B] border border-[#27272A] hover:border-[#3F3F46] rounded-2xl p-4 transition active:scale-[0.99]">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="min-w-0">
+                                <div class="flex items-center gap-1.5 flex-wrap">
+                                    <h3 class="text-sm font-semibold text-[#FAFAFA] truncate">${escapeHTML(c.pessoa)}</h3>
+                                    ${c.destinacao ? `<span class="text-[11px] text-[#71717A]">· ${escapeHTML(c.destinacao)}</span>` : ''}
+                                </div>
+                            </div>
+
+                            <div class="text-right flex-shrink-0">
+                                <span class="font-mono text-base font-semibold tabular-nums ${c.status === 'quitado' ? 'text-[#71717A] line-through' : 'text-[#FAFAFA]'}">
+                                    ${formatBRL(c.status === 'quitado' ? c.valorOriginal : c.saldoPrincipal)}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="mt-2.5 pt-2.5 border-t border-[#27272A]/80 flex items-center justify-between gap-2 text-xs">
+                            <div class="flex items-center gap-2">
+                                ${interestLine}
+                                ${c.comprovante ? `
+                                    <span title="Comprovante anexado" class="text-[#71717A]">
+                                        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+                                        </svg>
+                                    </span>
+                                ` : ''}
+                            </div>
+
+                            <div class="flex items-center gap-2">
+                                ${statusInfo.state !== 'futuro' && c.status === 'ativo' ? `<span class="font-mono text-[11px] text-[#71717A] hidden sm:inline">Dia ${String(c.diaRecorrente).padStart(2, '0')}</span>` : ''}
+                                ${statusTag}
+                            </div>
+                        </div>
+                    </article>
+                `;
+            }).join('');
+        }
+
+        // =================================================================
+        // 4. MODAL NOVO / EDITAR EMPRÉSTIMO
+        // =================================================================
+        function openModal(id) {
+            document.getElementById(id).classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+
+        function openFormModal(contractToEdit = null) {
+            const form = document.getElementById('contract-form');
+            form.reset();
+            tempFormReceiptBase64 = null;
+            updateReceiptFormUI();
+
+            if (contractToEdit) {
+                document.getElementById('form-modal-title').textContent = 'Editar Empréstimo';
+                document.getElementById('form-id').value = contractToEdit.id;
+                document.getElementById('form-person').value = contractToEdit.pessoa;
+                document.getElementById('form-amount').value = formatBRL(contractToEdit.saldoPrincipal);
+                document.getElementById('form-due-day').value = contractToEdit.diaRecorrente;
+                document.getElementById('form-start-date').value = contractToEdit.dataInicio || getTodayISO();
+                document.getElementById('form-destination').value = contractToEdit.destinacao || '';
+                document.getElementById('form-notes').value = contractToEdit.descricao || '';
+
+                const hasInt = Number(contractToEdit.taxaJuros) > 0;
+                setInterestMode(hasInt);
+                if (hasInt) {
+                    document.getElementById('form-rate').value = contractToEdit.taxaJuros;
+                }
+
+                if (contractToEdit.comprovante) {
+                    tempFormReceiptBase64 = contractToEdit.comprovante;
+                    updateReceiptFormUI();
+                }
+            } else {
+                document.getElementById('form-modal-title').textContent = 'Novo Empréstimo';
+                document.getElementById('form-id').value = '';
+                document.getElementById('form-due-day').value = new Date().getDate();
+                document.getElementById('form-start-date').value = getTodayISO();
+                setInterestMode(true);
+                document.getElementById('form-rate').value = '5';
+            }
+
+            syncDestinationChips();
+            updateFormInterestPreview();
+            openModal('form-modal');
+        }
+
+        function setInterestMode(enabled) {
+            hasInterestFlag = enabled;
+            const btnYes = document.getElementById('toggle-has-interest');
+            const btnNo = document.getElementById('toggle-no-interest');
+            const area = document.getElementById('interest-config-area');
+
+            if (enabled) {
+                btnYes.className = 'px-2.5 py-1 rounded-md text-[11px] font-medium bg-[#27272A] text-[#FAFAFA] transition';
+                btnNo.className = 'px-2.5 py-1 rounded-md text-[11px] font-medium text-[#71717A] transition';
+                area.classList.remove('hidden');
+            } else {
+                btnNo.className = 'px-2.5 py-1 rounded-md text-[11px] font-medium bg-[#27272A] text-[#FAFAFA] transition';
+                btnYes.className = 'px-2.5 py-1 rounded-md text-[11px] font-medium text-[#71717A] transition';
+                area.classList.add('hidden');
+            }
+            updateFormInterestPreview();
+        }
+
+        function setQuickRate(rate) {
+            document.getElementById('form-rate').value = rate;
+            updateFormInterestPreview();
+        }
+
+        function updateFormInterestPreview() {
+            const amount = parseCurrency(document.getElementById('form-amount').value);
+            const rate = hasInterestFlag ? (parseFloat(document.getElementById('form-rate').value) || 0) : 0;
+            const monthly = (amount * rate) / 100;
+            document.getElementById('form-interest-preview').textContent = `${formatBRL(monthly)} / mês`;
+        }
+
+        function selectDestinationChip(label) {
+            document.getElementById('form-destination').value = label;
+            syncDestinationChips();
+        }
+
+        function syncDestinationChips() {
+            const current = document.getElementById('form-destination').value.trim().toLowerCase();
+            document.querySelectorAll('.dest-chip').forEach(chip => {
+                const match = chip.textContent.trim().toLowerCase() === current;
+                chip.className = match
+                    ? 'dest-chip px-2.5 py-1 rounded-lg text-xs bg-[#27272A] text-[#FAFAFA] border border-[#3F3F46] transition'
+                    : 'dest-chip px-2.5 py-1 rounded-lg text-xs bg-[#18181B] text-[#A1A1AA] border border-[#27272A] transition';
+            });
+        }
+
+        // Compressão de Imagem via Canvas (max 900px, qualidade 0.72)
+        function compressImageFile(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = e => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const maxDim = 900;
+                        let w = img.width;
+                        let h = img.height;
+                        if (w > maxDim || h > maxDim) {
+                            if (w > h) {
+                                h = Math.round((h * maxDim) / w);
+                                w = maxDim;
+                            } else {
+                                w = Math.round((w * maxDim) / h);
+                                h = maxDim;
+                            }
+                        }
+                        const canvas = document.createElement('canvas');
+                        canvas.width = w;
+                        canvas.height = h;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, w, h);
+                        resolve(canvas.toDataURL('image/jpeg', 0.72));
+                    };
+                    img.onerror = reject;
+                    img.src = e.target.result;
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        async function handleReceiptUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            try {
+                tempFormReceiptBase64 = await compressImageFile(file);
+                updateReceiptFormUI();
+            } catch (err) {
+                showToast('Não foi possível processar a imagem.');
+            }
+            event.target.value = '';
+        }
+
+        function removeFormReceipt() {
+            tempFormReceiptBase64 = null;
+            updateReceiptFormUI();
+        }
+
+        function updateReceiptFormUI() {
+            const inputLabel = document.getElementById('receipt-input-label');
+            const previewBox = document.getElementById('receipt-preview-container');
+            const img = document.getElementById('receipt-preview-img');
+
+            if (tempFormReceiptBase64) {
+                inputLabel.classList.add('hidden');
+                previewBox.classList.remove('hidden');
+                img.src = tempFormReceiptBase64;
+            } else {
+                inputLabel.classList.remove('hidden');
+                previewBox.classList.add('hidden');
+                img.src = '';
+            }
+        }
+
+        function saveContract(event) {
+            event.preventDefault();
+            const id = document.getElementById('form-id').value;
+            const pessoa = document.getElementById('form-person').value.trim();
+            const amount = parseCurrency(document.getElementById('form-amount').value);
+            const taxaJuros = hasInterestFlag ? (parseFloat(document.getElementById('form-rate').value) || 0) : 0;
+            const diaRecorrente = parseInt(document.getElementById('form-due-day').value, 10) || 1;
+            const dataInicio = document.getElementById('form-start-date').value || getTodayISO();
+            const destinacao = document.getElementById('form-destination').value.trim() || 'Pessoal';
+            const descricao = document.getElementById('form-notes').value.trim();
+
+            if (!pessoa || amount <= 0) {
+                showToast('Informe o nome e um valor maior que zero.');
+                return;
+            }
+
+            if (id) {
+                const idx = contracts.findIndex(c => c.id === id);
+                if (idx !== -1) {
+                    contracts[idx] = {
+                        ...contracts[idx],
+                        pessoa,
+                        saldoPrincipal: amount,
+                        taxaJuros,
+                        diaRecorrente,
+                        dataInicio,
+                        destinacao,
+                        descricao,
+                        comprovante: tempFormReceiptBase64
+                    };
+                }
+                showToast('Contrato atualizado');
+            } else {
+                const newContract = {
+                    id: 'ctr-' + Date.now(),
+                    pessoa,
+                    valorOriginal: amount,
+                    saldoPrincipal: amount,
+                    taxaJuros,
+                    diaRecorrente,
+                    dataInicio,
+                    destinacao,
+                    descricao,
+                    comprovante: tempFormReceiptBase64,
+                    status: 'ativo',
+                    ultimoMesPago: null,
+                    historico: []
+                };
+                contracts.unshift(newContract);
+                showToast('Empréstimo registrado');
+            }
+
+            saveContracts();
+            renderApp();
+            closeModal('form-modal');
+        }
+
+        // =================================================================
+        // 5. DETALHES DO CONTRATO & FLUXO DE RECEBIMENTO EM 3 MODOS
+        // =================================================================
+        function openDetailModal(contractId) {
+            activeContractId = contractId;
+            const c = contracts.find(item => item.id === contractId);
+            if (!c) return;
+
+            const monthlyInt = getMonthlyInterest(c);
+            const statusInfo = getDueStatusInfo(c);
+
+            // Header
+            document.getElementById('det-dest-badge').textContent = c.destinacao || 'Pessoal';
+            document.getElementById('det-person').textContent = c.pessoa;
+
+            const badgeEl = document.getElementById('det-month-badge');
+            badgeEl.textContent = statusInfo.label;
+            badgeEl.className = `text-[11px] font-medium px-2 py-0.5 rounded-md ${statusInfo.state === 'futuro' ? 'bg-[#18181B] text-[#A1A1AA]' : statusInfo.className}`;
+
+            // Valores
+            document.getElementById('det-balance').textContent = formatBRL(c.saldoPrincipal);
+            document.getElementById('det-monthly-interest').textContent = Number(c.taxaJuros) > 0 ? formatBRL(monthlyInt) : 'Sem juros';
+            document.getElementById('det-original').textContent = formatBRL(c.valorOriginal);
+            document.getElementById('det-rate').textContent = Number(c.taxaJuros) > 0 ? `${String(c.taxaJuros).replace('.', ',')}% a.m.` : '0% a.m.';
+            document.getElementById('det-due-day').textContent = `Todo dia ${String(c.diaRecorrente).padStart(2, '0')}`;
+
+            const notesBox = document.getElementById('det-notes-box');
+            if (c.descricao) {
+                notesBox.textContent = c.descricao;
+                notesBox.classList.remove('hidden');
+            } else {
+                notesBox.classList.add('hidden');
+            }
+
+            // Botão de Comprovante
+            document.getElementById('det-receipt-btn-label').textContent = c.comprovante ? 'Ver Comprovante' : 'Anexar Comprovante';
+
+            // Seção de Recebimento vs Quitado
+            const receiveSec = document.getElementById('receive-payment-section');
+            const settledBanner = document.getElementById('settled-banner');
+
+            if (c.status === 'quitado') {
+                receiveSec.classList.add('hidden');
+                settledBanner.classList.remove('hidden');
+            } else {
+                receiveSec.classList.remove('hidden');
+                settledBanner.classList.add('hidden');
+
+                const [y, m] = getCurrentCompetence().split('-');
+                document.getElementById('receive-competence-label').textContent = `Comp: ${m}/${y}`;
+                document.getElementById('pay-date').value = getTodayISO();
+                document.getElementById('pay-note').value = '';
+
+                // Se contrato tem juros > 0, inicia no modo "Só Juros"; senão inicia em "Abater Principal"
+                const btnJuros = document.getElementById('mode-btn-juros');
+                if (Number(c.taxaJuros) > 0) {
+                    btnJuros.disabled = false;
+                    btnJuros.classList.remove('opacity-40', 'cursor-not-allowed');
+                    setPaymentMode('juros');
+                } else {
+                    btnJuros.disabled = true;
+                    btnJuros.classList.add('opacity-40', 'cursor-not-allowed');
+                    setPaymentMode('amortizacao');
+                }
+            }
+
+            // Reseta confirmação de exclusão
+            deleteConfirmArmed = false;
+            clearTimeout(deleteConfirmTimer);
+            document.getElementById('btn-delete-contract').textContent = 'Excluir Contrato';
+
+            renderContractHistory(c);
+            openModal('detail-modal');
+        }
+
+        function setPaymentMode(mode) {
+            const c = contracts.find(item => item.id === activeContractId);
+            if (!c) return;
+            if (mode === 'juros' && (!c.taxaJuros || Number(c.taxaJuros) <= 0)) return;
+
+            currentPaymentMode = mode;
+
+            // Atualiza estilo dos 3 botões
+            ['juros', 'amortizacao', 'quitacao'].forEach(m => {
+                const btn = document.getElementById(`mode-btn-${m}`);
+                if (m === mode) {
+                    btn.className = 'pay-mode-btn py-2 px-1.5 rounded-lg text-[11px] font-medium text-[#FAFAFA] bg-[#27272A] transition text-center leading-tight';
+                } else {
+                    btn.className = `pay-mode-btn py-2 px-1.5 rounded-lg text-[11px] font-medium text-[#71717A] hover:text-[#A1A1AA] transition text-center leading-tight ${btn.disabled ? 'opacity-40 cursor-not-allowed' : ''}`;
+                }
+            });
+
+            const monthlyInt = getMonthlyInterest(c);
+            const currentComp = getCurrentCompetence();
+            const alreadyPaidMonth = c.ultimoMesPago === currentComp;
+
+            const explanationEl = document.getElementById('mode-explanation');
+            const labelEl = document.getElementById('pay-amount-label');
+            const amountInput = document.getElementById('pay-amount');
+            const includeIntBox = document.getElementById('pay-include-interest-box');
+            const includeIntCheck = document.getElementById('pay-include-interest');
+            const submitBtn = document.getElementById('pay-submit-btn');
+
+            if (mode === 'juros') {
+                explanationEl.textContent = 'Registra o rendimento mensal e mantém o saldo principal intacto para o próximo mês.';
+                labelEl.textContent = 'Valor dos Juros Recebidos';
+                amountInput.value = formatBRL(monthlyInt);
+                amountInput.readOnly = false;
+                includeIntBox.classList.add('hidden');
+                includeIntCheck.checked = false;
+                submitBtn.textContent = 'Confirmar Recebimento de Juros';
+            } else if (mode === 'amortizacao') {
+                explanationEl.textContent = 'Abate diretamente o saldo principal. Os juros futuros passarão a incidir sobre o novo saldo.';
+                labelEl.textContent = 'Valor Abatido do Principal';
+                amountInput.value = '';
+                amountInput.placeholder = 'R$ 0,00';
+                amountInput.readOnly = false;
+
+                if (monthlyInt > 0 && !alreadyPaidMonth) {
+                    includeIntBox.classList.remove('hidden');
+                    document.getElementById('pay-extra-interest-val').textContent = formatBRL(monthlyInt);
+                    includeIntCheck.checked = false;
+                } else {
+                    includeIntBox.classList.add('hidden');
+                    includeIntCheck.checked = false;
+                }
+                submitBtn.textContent = 'Confirmar Amortização';
+            } else if (mode === 'quitacao') {
+                explanationEl.textContent = 'Liquida todo o saldo principal restante e encerra o contrato.';
+                labelEl.textContent = 'Saldo Principal a Quitar';
+                amountInput.value = formatBRL(c.saldoPrincipal);
+                amountInput.readOnly = true;
+
+                if (monthlyInt > 0 && !alreadyPaidMonth) {
+                    includeIntBox.classList.remove('hidden');
+                    document.getElementById('pay-extra-interest-val').textContent = formatBRL(monthlyInt);
+                    includeIntCheck.checked = true;
+                } else {
+                    includeIntBox.classList.add('hidden');
+                    includeIntCheck.checked = false;
+                }
+                submitBtn.textContent = 'Quitar e Encerrar Contrato';
+            }
+
+            updatePaymentPreview();
+        }
+
+        function updatePaymentPreview() {
+            const c = contracts.find(item => item.id === activeContractId);
+            if (!c) return;
+
+            const baseAmount = parseCurrency(document.getElementById('pay-amount').value);
+            const includeInt = document.getElementById('pay-include-interest').checked;
+            const monthlyInt = includeInt ? getMonthlyInterest(c) : 0;
+
+            const total = baseAmount + monthlyInt;
+            document.getElementById('pay-total-preview').textContent = formatBRL(total);
+        }
+
+        function submitPayment(event) {
+            event.preventDefault();
+            const c = contracts.find(item => item.id === activeContractId);
+            if (!c) return;
+
+            const amount = parseCurrency(document.getElementById('pay-amount').value);
+            const date = document.getElementById('pay-date').value || getTodayISO();
+            const note = document.getElementById('pay-note').value.trim();
+            const includeInt = document.getElementById('pay-include-interest').checked;
+            const currentComp = getCurrentCompetence();
+            const monthlyInt = getMonthlyInterest(c);
+
+            c.historico = c.historico || [];
+
+            if (currentPaymentMode === 'juros') {
+                if (amount <= 0) {
+                    showToast('Informe o valor dos juros recebidos.');
+                    return;
+                }
+                c.historico.unshift({
+                    id: 'hist-' + Date.now(),
+                    data: date,
+                    tipo: 'juros',
+                    valor: Number(amount.toFixed(2)),
+                    competencia: currentComp,
+                    nota: note || 'Juros mensais'
+                });
+                c.ultimoMesPago = currentComp;
+                showToast('Juros do mês registrados');
+
+            } else if (currentPaymentMode === 'amortizacao') {
+                if (amount <= 0) {
+                    showToast('Informe o valor a abater do principal.');
+                    return;
+                }
+                const abated = Math.min(amount, c.saldoPrincipal);
+
+                // Se marcou que também pagou os juros do mês junto
+                if (includeInt && monthlyInt > 0) {
+                    c.historico.unshift({
+                        id: 'hist-int-' + Date.now(),
+                        data: date,
+                        tipo: 'juros',
+                        valor: monthlyInt,
+                        competencia: currentComp,
+                        nota: 'Juros do mês (junto à amortização)'
+                    });
+                    c.ultimoMesPago = currentComp;
+                }
+
+                c.saldoPrincipal = Number((c.saldoPrincipal - abated).toFixed(2));
+                const isNowPaid = c.saldoPrincipal <= 0.009;
+
+                c.historico.unshift({
+                    id: 'hist-amo-' + (Date.now() + 1),
+                    data: date,
+                    tipo: isNowPaid ? 'quitacao' : 'amortizacao',
+                    valor: Number(abated.toFixed(2)),
+                    competencia: currentComp,
+                    nota: note || (isNowPaid ? 'Quitação final' : 'Abatimento do principal')
+                });
+
+                if (isNowPaid) {
+                    c.saldoPrincipal = 0;
+                    c.status = 'quitado';
+                    c.ultimoMesPago = currentComp;
+                    showToast('Saldo zerado e contrato quitado');
+                } else {
+                    showToast('Principal abatido com sucesso');
+                }
+
+            } else if (currentPaymentMode === 'quitacao') {
+                if (includeInt && monthlyInt > 0) {
+                    c.historico.unshift({
+                        id: 'hist-int-' + Date.now(),
+                        data: date,
+                        tipo: 'juros',
+                        valor: monthlyInt,
+                        competencia: currentComp,
+                        nota: 'Juros finais na quitação'
+                    });
+                }
+
+                if (c.saldoPrincipal > 0) {
+                    c.historico.unshift({
+                        id: 'hist-quit-' + (Date.now() + 1),
+                        data: date,
+                        tipo: 'quitacao',
+                        valor: Number(c.saldoPrincipal.toFixed(2)),
+                        competencia: currentComp,
+                        nota: note || 'Quitação total do principal'
+                    });
+                }
+
+                c.saldoPrincipal = 0;
+                c.status = 'quitado';
+                c.ultimoMesPago = currentComp;
+                showToast('Contrato quitado');
+            }
+
+            saveContracts();
+            renderApp();
+            openDetailModal(c.id);
+        }
+
+        function renderContractHistory(c) {
+            const listEl = document.getElementById('det-history-list');
+            const hist = c.historico || [];
+
+            if (hist.length === 0) {
+                listEl.innerHTML = `
+                    <p class="text-[11px] text-[#71717A] py-2">Nenhuma movimentação registrada neste contrato.</p>
+                `;
+                return;
+            }
+
+            const typeBadges = {
+                juros: { label: 'Juros', cls: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' },
+                amortizacao: { label: 'Amortização', cls: 'text-sky-400 bg-sky-500/10 border-sky-500/20' },
+                quitacao: { label: 'Quitação', cls: 'text-[#FAFAFA] bg-[#27272A] border-[#3F3F46]' }
+            };
+
+            listEl.innerHTML = hist.map(h => {
+                const badge = typeBadges[h.tipo] || typeBadges.juros;
+                return `
+                    <div class="flex items-center justify-between gap-2 bg-[#18181B] border border-[#27272A] rounded-xl px-3.5 py-2.5">
+                        <div class="min-w-0">
+                            <div class="flex items-center gap-2">
+                                <span class="text-[10px] font-medium px-1.5 py-0.2 rounded border ${badge.cls}">${badge.label}</span>
+                                <span class="font-mono text-xs font-semibold text-[#FAFAFA] tabular-nums">${formatBRL(h.valor)}</span>
+                                <span class="font-mono text-[11px] text-[#71717A]">${formatDateBR(h.data)}</span>
+                            </div>
+                            ${h.nota ? `<p class="text-[11px] text-[#71717A] truncate mt-0.5">${escapeHTML(h.nota)}</p>` : ''}
+                        </div>
+                        <button type="button" onclick="revertHistoryEntry('${h.id}')" title="Estornar lançamento"
+                            class="p-1.5 text-[#71717A] hover:text-red-400 rounded-lg transition flex-shrink-0">
+                            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+                            </svg>
+                        </button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Estorna um lançamento do extrato e recalcula o saldo principal e status corretamente
+        function revertHistoryEntry(entryId) {
+            const c = contracts.find(item => item.id === activeContractId);
+            if (!c) return;
+
+            const entry = (c.historico || []).find(h => h.id === entryId);
+            if (!entry) return;
+
+            c.historico = c.historico.filter(h => h.id !== entryId);
+
+            // Se era amortização ou quitação, devolve o valor ao saldo principal
+            if (entry.tipo === 'amortizacao' || entry.tipo === 'quitacao') {
+                c.saldoPrincipal = Number((c.saldoPrincipal + Number(entry.valor)).toFixed(2));
+                if (c.saldoPrincipal > 0) {
+                    c.status = 'ativo';
+                }
+            }
+
+            // Recalcula ultimoMesPago com base nos registros restantes de juros
+            const lastInterest = c.historico.find(h => h.tipo === 'juros');
+            c.ultimoMesPago = lastInterest ? lastInterest.competencia : null;
+
+            saveContracts();
+            renderApp();
+            openDetailModal(c.id);
+            showToast('Lançamento estornado');
+        }
+
+        function reopenActiveContract() {
+            const c = contracts.find(item => item.id === activeContractId);
+            if (!c) return;
+            if (c.saldoPrincipal <= 0) {
+                c.saldoPrincipal = c.valorOriginal;
+            }
+            c.status = 'ativo';
+            saveContracts();
+            renderApp();
+            openDetailModal(c.id);
+            showToast('Contrato reaberto');
+        }
+
+        function editActiveContract() {
+            const c = contracts.find(item => item.id === activeContractId);
+            if (!c) return;
+            closeModal('detail-modal');
+            openFormModal(c);
+        }
+
+        function handleDeleteContract() {
+            const btn = document.getElementById('btn-delete-contract');
+            if (!deleteConfirmArmed) {
+                deleteConfirmArmed = true;
+                btn.textContent = 'Toque novamente para excluir';
+                btn.classList.add('text-red-400', 'font-medium');
+                deleteConfirmTimer = setTimeout(() => {
+                    deleteConfirmArmed = false;
+                    btn.textContent = 'Excluir Contrato';
+                    btn.classList.remove('text-red-400', 'font-medium');
+                }, 3500);
+            } else {
+                contracts = contracts.filter(c => c.id !== activeContractId);
+                saveContracts();
+                renderApp();
+                closeModal('detail-modal');
+                showToast('Contrato excluído');
+            }
+        }
+
+        // =================================================================
+        // 7. BACKUP, IMPORTAÇÃO E RELATÓRIO GERAL
+        // =================================================================
+        function buildGeneralReportText() {
+            const activeContracts = contracts.filter(c => c.status === 'ativo');
+
+            const sumCap = arr => arr.reduce((s, c) => s + Number(c.saldoPrincipal), 0);
+            const sumInt = arr => arr.reduce((s, c) => s + getMonthlyInterest(c), 0);
+
+            const formatLines = arr => arr.length === 0
+                ? '  Nenhum contrato ativo.'
+                : arr.map(c => {
+                    const mInt = getMonthlyInterest(c);
+                    const intTxt = mInt > 0 ? ` | Juros: ${formatBRL(mInt)} (${c.taxaJuros}%)` : ' | Sem juros';
+                    return `  • ${c.pessoa}: ${formatBRL(c.saldoPrincipal)}${intTxt} [Dia ${String(c.diaRecorrente).padStart(2, '0')}]`;
+                }).join('\n');
+
+            return [
+                `*CARTEIRA · RESUMO DE EMPRÉSTIMOS*`,
+                `Data: ${formatDateBR(getTodayISO())}`,
+                ``,
+                `*RESUMO GERAL*`,
+                `Capital na rua: *${formatBRL(sumCap(activeContracts))}*`,
+                `Juros previstos/mês: *${formatBRL(sumInt(activeContracts))}*`,
+                ``,
+                `*CONTRATOS ATIVOS (${activeContracts.length})*`,
+                formatLines(activeContracts)
+            ].join('\n');
+        }
+
+        function openBackupModal() {
+            const reportText = buildGeneralReportText();
+            document.getElementById('general-whatsapp-link').href = `https://wa.me/?text=${encodeURIComponent(reportText)}`;
+
+            resetConfirmArmed = false;
+            clearTimeout(resetConfirmTimer);
+            document.getElementById('btn-reset-all').textContent = 'Limpar todos os dados';
+
+            openModal('backup-modal');
+        }
+
+        function copyGeneralReport() {
+            const text = buildGeneralReportText();
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            document.body.appendChild(ta);
+            ta.select();
+            try {
+                document.execCommand('copy');
+                showToast('Relatório copiado');
+            } catch (e) {
+                showToast('Erro ao copiar relatório');
+            }
+            document.body.removeChild(ta);
+        }
+
+        function exportBackupJSON() {
+            const payload = {
+                app: 'Carteira · Gestão de Empréstimos',
+                exportedAt: new Date().toISOString(),
+                contracts
+            };
+            const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `carteira-backup-${getTodayISO()}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast('Backup exportado');
+        }
+
+        function importBackupJSON(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = e => {
+                try {
+                    const parsed = JSON.parse(e.target.result);
+                    if (parsed && Array.isArray(parsed.contracts)) {
+                        contracts = parsed.contracts;
+                        saveContracts();
+                        renderApp();
+                        closeModal('backup-modal');
+                        showToast('Backup restaurado com sucesso');
+                    } else {
+                        showToast('Arquivo inválido');
+                    }
+                } catch (err) {
+                    showToast('Erro ao ler arquivo JSON');
+                }
+                event.target.value = '';
+            };
+            reader.readAsText(file);
+        }
+
+        function handleResetAllData() {
+            const btn = document.getElementById('btn-reset-all');
+            if (!resetConfirmArmed) {
+                resetConfirmArmed = true;
+                btn.textContent = 'Confirmar limpeza total?';
+                btn.classList.add('text-red-400', 'font-medium');
+                resetConfirmTimer = setTimeout(() => {
+                    resetConfirmArmed = false;
+                    btn.textContent = 'Limpar todos os dados';
+                    btn.classList.remove('text-red-400', 'font-medium');
+                }, 3500);
+            } else {
+                contracts = [];
+                saveContracts();
+                renderApp();
+                closeModal('backup-modal');
+                showToast('Todos os dados foram limpos');
+            }
+        }
+    </script>
+</body>
+</html>
